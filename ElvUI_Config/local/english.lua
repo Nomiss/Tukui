@@ -176,8 +176,14 @@ L["Auras"] = true
 		L["Enable filter for arena debuffs"] = true
 	L["TargetTarget Debuffs"] = true
 	L["Focus Debuffs"] = true
-	L["Player/Target Auras in Row"] = true
+	L["Player Auras in Row"] = true
+	L["Target Auras in Row"] = true
+	L["Player Buff Rows"] = true
+	L["Player Debuff Rows"] = true
+	L["Target Buff Rows"] = true
+	L["Target Debuff Rows"] = true	
 		L["The ammount of auras displayed in a single row"] = true
+		L["Ammount of rows of auras"] = true
 	L["Small Frames Auras in Row"] = true
 	L["Raid Buff Display Size"] = true
 	
@@ -352,7 +358,8 @@ L["Data Texts"] = true
 		L["Display Critical Strike Rating"] = true
 	L["Mana Regen"] = true
 		L["Display Mana Regen Rate"] = true
-	
+	L["Call to Arms"] = true
+		L["Display the active roles that will recieve a reward for completing a random dungeon"] = true
 	
 --chat
 L["Chat"] = true
@@ -442,7 +449,9 @@ L["Skins"] = true
 	L["Character Frame"] = true
 	L["LFR Frame"] = true
 	L["Misc Frames"] = true
-	
+	L["Tabard Frame"] = true
+	L["Guild Registrar"] = true
+	L["Time Manager"] = true
 	L["Blizzard Skins"] = true
 	L["SKIN_DESC"] = "Adjust settings for external addon skins. As well as skinning of default blizzard stuff."
 	L["Addon Skins"] = true
