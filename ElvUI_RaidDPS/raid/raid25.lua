@@ -10,7 +10,7 @@ if C["raidframes"].griddps ~= true then
 	RAID_WIDTH = E.Scale(110)*C["raidframes"].scale
 	RAID_HEIGHT = E.Scale(25)*C["raidframes"].scale
 else
-	RAID_WIDTH = ((ChatLBackground2:GetWidth() / 5) - 2.5)*C["raidframes"].scale
+	RAID_WIDTH = ((ChatLBackground:GetWidth() / 5) - 2.5)*C["raidframes"].scale
 	RAID_HEIGHT = E.Scale(40)*C["raidframes"].scale
 end
 
@@ -284,7 +284,7 @@ oUF:Factory(function(self)
 			"groupBy", "GROUP",	
 			"yOffset", E.Scale(6)
 		)	
-		raid:Point("BOTTOMLEFT", ChatLBackground2, "TOPLEFT", 1, 40)
+		raid:Point("BOTTOMLEFT", ChatLBackground, "TOPLEFT", 1, 40)
 	else
 		raid = self:SpawnHeader("ElvuiDPSR6R25", nil, "custom [@raid6,noexists][@raid26,exists] hide;show",
 			'oUF-initialConfigFunction', [[
@@ -308,7 +308,7 @@ oUF:Factory(function(self)
 			"columnSpacing", 3,
 			"columnAnchorPoint", "TOP"		
 		)	
-		raid:Point("BOTTOMLEFT", ChatLBackground2, "TOPLEFT", 1, 35)	
+		raid:Point("BOTTOMLEFT", ChatLBackground, "TOPLEFT", 1, 35)	
 	end
 	
 	local function ChangeVisibility(visibility)
@@ -336,6 +336,12 @@ oUF:Factory(function(self)
 				else
 					ChangeVisibility("custom [@raid6,noexists][@raid26,exists] hide;show")
 				end
+			end
+			
+			if inInstance and instanceType == "raid" and maxPlayers == 10 then
+				raid:SetAttribute("groupFilter", "1,2")
+			else
+				raid:SetAttribute("groupFilter", "1,2,3,4,5")
 			end
 		else
 			self:RegisterEvent("PLAYER_REGEN_ENABLED")
