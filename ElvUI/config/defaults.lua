@@ -42,6 +42,7 @@ DB["general"] = {
 
 DB["skin"] = {
 	["enable"] = true,
+		["bags"] = true,
 		["reforge"] = true,
 		["calendar"] = true,
 		["achievement"] = true,
@@ -170,11 +171,11 @@ DB["unitframes"] = {
 	["cblatency"] = false, -- enable castbar latency
 	["cbicons"] = true, -- enable icons on castbar
 	["cbticks"] = true,
-	["castplayerwidth"] = 275,
+	["castplayerwidth"] = 276,
 	["castplayerheight"] = 20,
-	["casttargetwidth"] = 275,
+	["casttargetwidth"] = 276,
 	["casttargetheight"] = 20,
-	["castfocuswidth"] = 275,
+	["castfocuswidth"] = 276,
 	["castfocusheight"] = 20,
 	["castbarcolor"] = DB["media"].bordercolor, -- Color of player castbar
 	["nointerruptcolor"] = {r = 0.78, g = 0.25, b = 0.25}, -- Color of target castbar
@@ -322,7 +323,9 @@ DB["others"] = {
 	["errorenable"] = true,                     -- true to enable this mod, false to disable
 	["autoacceptinv"] = true,                 -- auto-accept invite from guildmate and friends.
 	["enablebag"] = true,                     -- enable an all in one bag mod that fit Elvui perfectly
-	
+	["bagbar"] = false,
+	["bagbardirection"] = "VERTICAL",
+	["bagbarmouseover"] = true,
 
 	["lootframe"] = true,                  -- reskin the loot frame to fit Elvui
 	["rolllootframe"] = true,              -- reskin the roll frame to fit Elvui
