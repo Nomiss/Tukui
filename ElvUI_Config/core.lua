@@ -119,10 +119,14 @@ function ElvuiConfig.GenerateOptionsInternal()
 		timeout = 0,
 		whileDead = 1,
 	}
-
-	if C["general"].upperpanel == true then
+	
+	if C["general"].upperpanel == true and C["general"].lowerpanel == true then
+		L["DATATEXT_POS"] = L["DATATEXT_POS3"]	
+	elseif C["general"].upperpanel == true and C["general"].lowerpanel ~= true then
 		L["DATATEXT_POS"] = L["DATATEXT_POS2"]
-	end
+	elseif C["general"].lowerpanel == true and C["general"].upperpanel ~= true then
+		L["DATATEXT_POS"] = L["DATATEXT_POS4"]		
+	end	
 	
 	local RaidBuffs = {
 		["HealerBuffIDs"] = true,
@@ -596,7 +600,7 @@ function ElvuiConfig.GenerateOptionsInternal()
 						order = 11,
 						type = "toggle",
 						name = L["Lower Frame"],
-						desc = L["Enable a bar accross the bottom of the screen, mostly for decoration."],					
+						desc = L["Enable a bar accross the bottom of the screen, doing this will allow for four extra datatext positions."],					
 					},
 				},
 			},
@@ -844,9 +848,24 @@ function ElvuiConfig.GenerateOptionsInternal()
 								name = L["Track CC Debuffs"],
 								desc = L["Tracks CC debuffs on nameplates from you or a friendly player"],										
 							},
+							width = {
+								type = "range",
+								order = 6,
+								name = L["Width"],
+								desc = L["Controls the width of the nameplate"],
+								type = "range",
+								min = 50, max = 150, step = 1,		
+								set = function(info, value) db.nameplate[ info[#info] ] = value; C.nameplate[ info[#info] ] = value end,
+							},
+							showlevel = {
+								type = "toggle",
+								order = 7,
+								name = L["Display Level"],
+								desc = L["Display level text on nameplate for nameplates that belong to units that aren't your level."],	
+							},
 							Colors = {
 								type = "group",
-								order = 6,
+								order = 8,
 								name = L["Colors"],
 								guiInline = true,	
 								get = function(info)
@@ -875,13 +894,20 @@ function ElvuiConfig.GenerateOptionsInternal()
 										desc = L["This is displayed when you don't have threat as a tank, if you do have threat it is displayed as a DPS/Healer"],
 										hasAlpha = false,
 									},
-									transitioncolor = {
+									goodtransitioncolor = {
 										type = "color",
 										order = 3,
-										name = L["Transition Color"],
-										desc = L["This color is displayed when gaining/losing threat"],
+										name = L["Good Transition Color"],
+										desc = L["This color is displayed when gaining/losing threat, for a tank it would be displayed when gaining threat, for a dps/healer it would be displayed when losing threat"],
 										hasAlpha = false,									
 									},
+									badtransitioncolor = {
+										type = "color",
+										order = 4,
+										name = L["Bad Transition Color"],
+										desc = L["This color is displayed when gaining/losing threat, for a tank it would be displayed when losing threat, for a dps/healer it would be displayed when gaining threat"],
+										hasAlpha = false,									
+									},									
 								},
 							},
 						},
@@ -1667,11 +1693,11 @@ function ElvuiConfig.GenerateOptionsInternal()
 							buffindicatorsize = {
 								type = "range",
 								order = 22,
-								name = L["Raid Buff Display Size"],
+								name = L["Buff Icon Size"],
 								desc = L["Size of the buff icon on raidframes"],
 								disabled = function() return not db.raidframes.enable and not db.unitframes.enable end,
 								type = "range",
-								min = 3, max = 9, step = 1,									
+								min = 3, max = 18, step = 1,									
 							},
 						},
 					},
@@ -3023,12 +3049,18 @@ function ElvuiConfig.GenerateOptionsInternal()
 			},
 		},
 	}
-	
-	if C["general"].upperpanel == true then
+	if C["general"].upperpanel == true and C["general"].lowerpanel == true then
+		for _, option in pairs(ElvuiConfig.Options.args.datatext.args.DataGroup.args) do
+			option.max = 14
+		end
+	elseif C["general"].upperpanel == true and C["general"].lowerpanel ~= true then
 		for _, option in pairs(ElvuiConfig.Options.args.datatext.args.DataGroup.args) do
 			option.max = 10
 		end
-		L["DATATEXT_POS"] = L["DATATEXT_POS2"]
+	elseif C["general"].lowerpanel == true and C["general"].upperpanel ~= true then
+		for _, option in pairs(ElvuiConfig.Options.args.datatext.args.DataGroup.args) do
+			option.max = 12
+		end	
 	end
 end
 

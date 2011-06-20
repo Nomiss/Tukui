@@ -57,7 +57,7 @@ local function SetRightTooltipPos(self)
 			self:SetPoint("BOTTOMRIGHT", StuffingFrameBags, "TOPRIGHT", -1, E.Scale(18))	
 		elseif #ContainerFrame1.bags > 0 and _G[ContainerFrame1.bags[#ContainerFrame1.bags]]:IsShown() then
 			self:Point("BOTTOMRIGHT", _G[ContainerFrame1.bags[#ContainerFrame1.bags]], "TOPRIGHT", -2, 18)
-		elseif TooltipMover and E.Movers["TooltipMover"]["moved"] == true then
+		elseif TooltipMover and E.Movers and E.Movers["TooltipMover"] then
 			local point, _, _, _, _ = TooltipMover:GetPoint()
 			if point == "TOPLEFT" then
 				self:SetPoint("TOPLEFT", TooltipMover, "BOTTOMLEFT", 1, E.Scale(-4))
@@ -71,16 +71,12 @@ local function SetRightTooltipPos(self)
 		else
 			if E.CheckAddOnShown() == true then
 				if C["chat"].showbackdrop == true and E.ChatRightShown == true then
-					if E.RightChat == true then
-						self:SetPoint("BOTTOMRIGHT", ChatRBackground, "TOPRIGHT", -1, E.Scale(42))	
-					else
-						self:SetPoint("BOTTOMRIGHT", ChatRBackground, "TOPRIGHT", -1, E.Scale(18))	
-					end
+					self:Point("BOTTOMRIGHT", ChatRBackground, "TOPRIGHT", 0, 18)	
 				else
-					self:SetPoint("BOTTOMRIGHT", ChatRBackground, "TOPRIGHT", -1, E.Scale(18))		
+					self:Point("BOTTOMRIGHT", ChatRBackground, "TOPRIGHT", -8, -14)		
 				end	
 			else
-				self:SetPoint("BOTTOMRIGHT", UIParent, "BOTTOMRIGHT", E.Scale(-3), E.Scale(42))	
+				self:Point("BOTTOMRIGHT", UIParent, "BOTTOMRIGHT", -12, 47)	
 			end
 		end
 	end

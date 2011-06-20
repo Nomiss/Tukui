@@ -141,16 +141,12 @@ local function PositionKLEAnchor()
 	KLEAlertsTopStackAnchor:ClearAllPoints()
 	if E.CheckAddOnShown() == true then
 		if C["chat"].showbackdrop == true and E.ChatRightShown == true then
-			if E.RightChat == true then
-				KLEAlertsTopStackAnchor:Point("BOTTOM", ChatRBackground, "TOP", 13, 14)	
-			else
-				KLEAlertsTopStackAnchor:Point("BOTTOM", ChatRBackground, "TOP", 13, -9)
-			end
+			KLEAlertsTopStackAnchor:Point("TOP", ChatRBackground, "TOP", 16, 4)	
 		else
-			KLEAlertsTopStackAnchor:Point("BOTTOM", ChatRBackground, "TOP", 13, -9)	
+			KLEAlertsTopStackAnchor:Point("TOP", ChatRBackground, "TOP", 16, -28)
 		end	
 	else
-		KLEAlertsTopStackAnchor:Point("BOTTOMRIGHT", UIParent, "BOTTOMRIGHT", -41, 14)		
+		KLEAlertsTopStackAnchor:Point("BOTTOMRIGHT", UIParent, "BOTTOMRIGHT", -49, 25)		
 	end
 end
 

@@ -13,20 +13,13 @@ local function CreateFrameOverlay(parent, name)
 	DPSElementsCharPos = nil
 	HealElementsCharPos = nil
 	
-	--Setup Variables
-	if not ElementsPos then ElementsPos = {} end
-	if not ElementsPos[name] or type(ElementsPos[name]) ~= "table" then ElementsPos[name] = {} end
-	if not ElementsPos[name]["moved"] then ElementsPos[name]["moved"] = false end
-	
 	local p, p2, p3, p4, p5 = parent:GetPoint()
-	
-	if ElementsPos[name]["moved"] ~= true then
-		ElementsPos[name]["moved"] = nil
-		ElementsPos[name]["p"] = nil
-		ElementsPos[name]["p2"] = nil
-		ElementsPos[name]["p3"] = nil
-		ElementsPos[name]["p4"] = nil
-	end
+	E["elements"] = E.SavePath["elements"]
+	if E["elements"] == {} then E["elements"] = nil end
+	if E["elements"] and E["elements"][name] == {} or (E["elements"] and E["elements"][name] and E["elements"][name]["moved"] == false) then 
+		E["elements"][name] = nil
+	end	
+
 	
 	local f2 = CreateFrame("Frame", nil, UIParent)
 	f2:SetPoint(p, p2, p3, p4, p5)
@@ -59,12 +52,17 @@ local function CreateFrameOverlay(parent, name)
 	f:SetScript("OnDragStop", function(self) 
 		if InCombatLockdown() then print(ERR_NOT_IN_COMBAT) return end
 		self:StopMovingOrSizing() 
-		ElementsPos[name]["moved"] = true
+		if not E.SavePath["elements"] then E.SavePath["elements"] = {} end
+		
+		E["elements"] = E.SavePath["elements"]
+		
+		E["elements"][name] = {}
+		
 		local p, _, p2, p3, p4 = self:GetPoint()
-		ElementsPos[name]["p"] = p
-		ElementsPos[name]["p2"] = p2
-		ElementsPos[name]["p3"] = p3
-		ElementsPos[name]["p4"] = p4
+		E["elements"][name]["p"] = p
+		E["elements"][name]["p2"] = p2
+		E["elements"][name]["p3"] = p3
+		E["elements"][name]["p4"] = p4
 	end)
 		
 	local x = tostring(name)
@@ -82,11 +80,10 @@ local function CreateFrameOverlay(parent, name)
 	parent:ClearAllPoints()
 	parent:SetAllPoints(f)
 	
-	if ElementsPos[name]["moved"] == true then
+	if E["elements"] and E["elements"][name] then
 		f2:ClearAllPoints()
-		f2:SetPoint(ElementsPos[name]["p"], UIParent, ElementsPos[name]["p3"], ElementsPos[name]["p4"], ElementsPos[name]["p5"])
+		f2:SetPoint(E["elements"][name]["p"], UIParent, E["elements"][name]["p3"], E["elements"][name]["p4"], E["elements"][name]["p5"])
 	end
-	
 	
 	local fs = f:CreateFontString(nil, "OVERLAY")
 	fs:SetFont(C["media"].font, C["unitframes"].auratextscale, "THINOUTLINE")
@@ -142,11 +139,8 @@ local function ResetElements(arg1)
 			local name = _G[frame]:GetName()
 			_G[frame]:ClearAllPoints()
 			_G[frame]:SetPoint(FramesDefault[name]["p"], FramesDefault[name]["p2"], FramesDefault[name]["p3"], FramesDefault[name]["p4"], FramesDefault[name]["p5"])
-			ElementsPos[name]["moved"] = nil
-			ElementsPos[name]["p"] = nil
-			ElementsPos[name]["p2"] = nil
-			ElementsPos[name]["p3"] = nil
-			ElementsPos[name]["p4"] = nil
+			E["elements"] = nil
+			E.SavePath["elements"] = E["elements"]
 		end
 		StaticPopup_Show("RELOAD_UI")
 	else
@@ -157,11 +151,13 @@ local function ResetElements(arg1)
 				local name = _G[arg1]:GetName()
 				_G[arg1]:ClearAllPoints()
 				_G[arg1]:SetPoint(FramesDefault[name]["p"], FramesDefault[name]["p2"], FramesDefault[name]["p3"], FramesDefault[name]["p4"], FramesDefault[name]["p5"])	
-				ElementsPos[name]["moved"] = nil	
-				ElementsPos[name]["p"] = nil
-				ElementsPos[name]["p2"] = nil
-				ElementsPos[name]["p3"] = nil
-				ElementsPos[name]["p4"] = nil		
+				
+				if E["elements"] then
+					E["elements"][name] = nil
+				end
+				
+				E.SavePath["elements"] = E["elements"]
+				
 				break	
 			end
 		end

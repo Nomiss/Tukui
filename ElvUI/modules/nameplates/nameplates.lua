@@ -8,10 +8,10 @@ local FONT = C["media"].font
 local FONTSIZE = 10
 local FONTFLAG = "THINOUTLINE"
 local hpHeight = 12
-local hpWidth = 110
+local hpWidth = C["nameplate"].width
 local iconSize = 25		--Size of all Icons, RaidIcon/ClassIcon/Castbar Icon
 local cbHeight = 5
-local cbWidth = 110
+local cbWidth = C["nameplate"].width
 local blankTex = C["media"].blank
 local OVERLAY = [=[Interface\TargetingFrame\UI-TargetingFrame-Flash]=]
 local numChildren = -1
@@ -235,6 +235,7 @@ local function OnHide(frame)
 	frame.overlay:Hide()
 	frame.cb:Hide()
 	frame.unit = nil
+	frame.threatStatus = nil
 	frame.guid = nil
 	frame.hasClass = nil
 	frame.isFriendly = nil
@@ -296,10 +297,9 @@ local function UpdateObjects(frame)
 	frame.hp:SetSize(hpWidth, hpHeight)	
 	frame.hp:SetPoint('TOP', frame, 'TOP', 0, -15)
 	frame.hp:GetStatusBarTexture():SetHorizTile(true)
-
-	--Match values
+	
 	frame.hp:SetMinMaxValues(frame.healthOriginal:GetMinMaxValues())
-	frame.hp:SetValue(frame.healthOriginal:GetValue() - 1)
+	frame.hp:SetValue(frame.healthOriginal:GetValue())
 	
 	--Colorize Plate
 	Colorize(frame)
@@ -314,24 +314,26 @@ local function UpdateObjects(frame)
 	frame.hp.name:SetText(frame.hp.oldname:GetText())
 	
 	--Setup level text
-	local level, elite, mylevel = tonumber(frame.hp.oldlevel:GetText()), frame.hp.elite:IsShown(), UnitLevel("player")
-	frame.hp.level:ClearAllPoints()
-	if C["nameplate"].showhealth == true then
-		frame.hp.level:SetPoint("RIGHT", frame.hp, "RIGHT", 2, 0)
-	else
-		frame.hp.level:SetPoint("RIGHT", frame.hp, "LEFT", -1, 0)
-	end
-	
-	frame.hp.level:SetTextColor(frame.hp.oldlevel:GetTextColor())
-	if frame.hp.boss:IsShown() then
-		frame.hp.level:SetText("??")
-		frame.hp.level:SetTextColor(0.8, 0.05, 0)
-		frame.hp.level:Show()
-	elseif not elite and level == mylevel then
-		frame.hp.level:Hide()
-	else
-		frame.hp.level:SetText(level..(elite and "+" or ""))
-		frame.hp.level:Show()
+	if C["nameplate"].showlevel == true then
+		local level, elite, mylevel = tonumber(frame.hp.oldlevel:GetText()), frame.hp.elite:IsShown(), UnitLevel("player")
+		frame.hp.level:ClearAllPoints()
+		if C["nameplate"].showhealth == true then
+			frame.hp.level:SetPoint("RIGHT", frame.hp, "RIGHT", 2, 0)
+		else
+			frame.hp.level:SetPoint("RIGHT", frame.hp, "LEFT", -1, 0)
+		end
+		
+		frame.hp.level:SetTextColor(frame.hp.oldlevel:GetTextColor())
+		if frame.hp.boss:IsShown() then
+			frame.hp.level:SetText("??")
+			frame.hp.level:SetTextColor(0.8, 0.05, 0)
+			frame.hp.level:Show()
+		elseif not elite and level == mylevel then
+			frame.hp.level:Hide()
+		else
+			frame.hp.level:SetText(level..(elite and "+" or ""))
+			frame.hp.level:Show()
+		end
 	end
 	
 	frame.overlay:ClearAllPoints()
@@ -367,14 +369,16 @@ local function SkinObjects(frame)
 	CreateVirtualFrame(hp)
 	
 	--Create Level
-	hp.level = hp:CreateFontString(nil, "OVERLAY")
-	hp.level:SetFont(FONT, FONTSIZE, FONTFLAG)
-	hp.level:SetShadowColor(0, 0, 0, 0.4)
-	hp.level:SetTextColor(1, 1, 1)
-	hp.level:SetShadowOffset(E.mult, -E.mult)	
-	hp.oldlevel = oldlevel
-	hp.boss = bossicon
-	hp.elite = elite
+	if C["nameplate"].showlevel == true then
+		hp.level = hp:CreateFontString(nil, "OVERLAY")
+		hp.level:SetFont(FONT, FONTSIZE, FONTFLAG)
+		hp.level:SetShadowColor(0, 0, 0, 0.4)
+		hp.level:SetTextColor(1, 1, 1)
+		hp.level:SetShadowOffset(E.mult, -E.mult)	
+		hp.oldlevel = oldlevel
+		hp.boss = bossicon
+		hp.elite = elite
+	end
 	
 	--Create Health Text
 	if C["nameplate"].showhealth == true then
@@ -471,7 +475,8 @@ end
 
 local goodR, goodG, goodB = unpack(C["nameplate"].goodcolor)
 local badR, badG, badB = unpack(C["nameplate"].badcolor)
-local transitionR, transitionG, transitionB = unpack(C["nameplate"].transitioncolor)
+local transitionR, transitionG, transitionB = unpack(C["nameplate"].goodtransitioncolor)
+local transitionR2, transitionG2, transitionB2 = unpack(C["nameplate"].badtransitioncolor)
 local function UpdateThreat(frame, elapsed)
 	frame.hp:Show()
 	if frame.hasClass == true then return end
@@ -494,14 +499,17 @@ local function UpdateThreat(frame, elapsed)
 				if E.Role == "Tank" then
 					frame.hp:SetStatusBarColor(badR, badG, badB)
 					frame.hp.hpbg:SetTexture(badR, badG, badB, 0.25)
+					frame.threatStatus = "BAD"
 				else
 					frame.hp:SetStatusBarColor(goodR, goodG, goodB)
 					frame.hp.hpbg:SetTexture(goodR, goodG, goodB, 0.25)
+					frame.threatStatus = "GOOD"
 				end		
 			else
 				--Set colors to their original, not in combat
 				frame.hp:SetStatusBarColor(frame.hp.rcolor, frame.hp.gcolor, frame.hp.bcolor)
 				frame.hp.hpbg:SetTexture(frame.hp.rcolor, frame.hp.gcolor, frame.hp.bcolor, 0.25)
+				frame.threatStatus = nil
 			end
 		else
 			--Ok we either have threat or we're losing/gaining it
@@ -511,14 +519,35 @@ local function UpdateThreat(frame, elapsed)
 				if E.Role == "Tank" then
 					frame.hp:SetStatusBarColor(goodR, goodG, goodB)
 					frame.hp.hpbg:SetTexture(goodR, goodG, goodB, 0.25)
+					frame.threatStatus = "GOOD"
 				else
 					frame.hp:SetStatusBarColor(badR, badG, badB)
 					frame.hp.hpbg:SetTexture(badR, badG, badB, 0.25)
+					frame.threatStatus = "BAD"
 				end
 			else
 				--Losing/Gaining Threat
-				frame.hp:SetStatusBarColor(transitionR, transitionG, transitionB)	
-				frame.hp.hpbg:SetTexture(transitionR, transitionG, transitionB, 0.25)
+				if E.Role == "Tank" then
+					if frame.threatStatus == "GOOD" then
+						--Losing Threat
+						frame.hp:SetStatusBarColor(transitionR2, transitionG2, transitionB2)	
+						frame.hp.hpbg:SetTexture(transitionR2, transitionG2, transitionB2, 0.25)				
+					else
+						--Gaining Threat
+						frame.hp:SetStatusBarColor(transitionR, transitionG, transitionB)	
+						frame.hp.hpbg:SetTexture(transitionR, transitionG, transitionB, 0.25)	
+					end
+				else
+					if frame.threatStatus == "GOOD" then
+						--Losing Threat
+						frame.hp:SetStatusBarColor(transitionR, transitionG, transitionB)	
+						frame.hp.hpbg:SetTexture(transitionR, transitionG, transitionB, 0.25)				
+					else
+						--Gaining Threat
+						frame.hp:SetStatusBarColor(transitionR2, transitionG2, transitionB2)	
+						frame.hp.hpbg:SetTexture(transitionR2, transitionG2, transitionB2, 0.25)	
+					end				
+				end
 			end
 		end
 	end
@@ -559,7 +588,7 @@ local function ShowHealth(frame, ...)
 	local d =(valueHealth/maxHealth)*100
 	
 	--Match values
-	frame.hp:SetMinMaxValues(minHealth, maxHealth)
+	frame.hp:SetValue(valueHealth - 1)	--Bug Fix 4.1
 	frame.hp:SetValue(valueHealth)	
 	
 	if C["nameplate"].showhealth == true then
@@ -594,6 +623,15 @@ local function CheckUnit_Guid(frame, ...)
 	else
 		frame.unit = nil
 	end	
+end
+
+--Update settings for nameplate to match config
+local function CheckSettings(frame, ...)
+	--Width
+	if frame.hp:GetWidth() ~= C["nameplate"].width then
+		frame.hp:Width(C["nameplate"].width)
+		hpWidth = C["nameplate"].width
+	end
 end
 
 --Attempt to match a nameplate with a GUID from the combat log
@@ -652,6 +690,7 @@ CreateFrame('Frame'):SetScript('OnUpdate', function(self, elapsed)
 	ForEachPlate(CheckBlacklist)
 	ForEachPlate(HideDrunkenText)
 	ForEachPlate(CheckUnit_Guid)
+	ForEachPlate(CheckSettings)
 end)
 
 function NamePlates:COMBAT_LOG_EVENT_UNFILTERED(_, event, _, _, sourceName, _, destGUID, _, _, spellID)

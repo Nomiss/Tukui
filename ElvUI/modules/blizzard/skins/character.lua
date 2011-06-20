@@ -30,14 +30,11 @@ local function LoadSkin()
 		local slot = _G["Character"..slot]
 		slot:StripTextures()
 		slot:StyleButton(false)
+		slot:SetTemplate("Default", true)
 		icon:SetTexCoord(.08, .92, .08, .92)
 		icon:ClearAllPoints()
 		icon:Point("TOPLEFT", 2, -2)
 		icon:Point("BOTTOMRIGHT", -2, 2)
-		
-		slot:SetFrameLevel(slot:GetFrameLevel() + 2)
-		slot:CreateBackdrop("Default")
-		slot.backdrop:SetAllPoints()
 	end
 	
 	-- a request by diftraku to color item by rarity on character frame.
@@ -51,20 +48,20 @@ local function LoadSkin()
 			if itemId then
 				local _, _, rarity, _, _, _, _, _, _, _, _ = GetItemInfo(itemId)
 				if rarity and rarity > 1 then
-					target.backdrop:SetBackdropBorderColor(GetItemQualityColor(rarity))
+					target:SetBackdropBorderColor(GetItemQualityColor(rarity))
 				else
-					target.backdrop:SetBackdropBorderColor(unpack(C.media.bordercolor))
+					target:SetBackdropBorderColor(unpack(C.media.bordercolor))
 				end
 			else
-				target.backdrop:SetBackdropBorderColor(unpack(C.media.bordercolor))
+				target:SetBackdropBorderColor(unpack(C.media.bordercolor))
 			end
 		end
 	end
 
 	local CheckItemBorderColor = CreateFrame("Frame")
-	CheckItemBorderColor:RegisterEvent("PLAYER_ENTERING_WORLD")
 	CheckItemBorderColor:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
 	CheckItemBorderColor:SetScript("OnEvent", ColorItemBorder)	
+	CharacterFrame:HookScript("OnShow", ColorItemBorder)
 	ColorItemBorder()
 	
 	--Strip Textures
@@ -87,8 +84,7 @@ local function LoadSkin()
 	CharacterModelFrameRotateLeftButton:Point("TOPLEFT", CharacterModelFrame, "TOPLEFT", 4, -4)
 	CharacterModelFrameRotateRightButton:Point("TOPLEFT", CharacterModelFrameRotateLeftButton, "TOPRIGHT", 4, 0)
 	
-	--Swap item flyout frame (shown when holding alt over a slot)
-	PaperDollFrameItemFlyout:HookScript("OnShow", function()
+	local function SkinItemFlyouts()
 		PaperDollFrameItemFlyoutButtons:StripTextures()
 		
 		for i=1, PDFITEMFLYOUT_MAXITEMS do
@@ -109,8 +105,12 @@ local function LoadSkin()
 					button.backdrop:SetAllPoints()			
 				end
 			end
-		end
-	end)
+		end	
+	end
+	
+	--Swap item flyout frame (shown when holding alt over a slot)
+	PaperDollFrameItemFlyout:HookScript("OnShow", SkinItemFlyouts)
+	hooksecurefunc("PaperDollItemSlotButton_UpdateFlyout", SkinItemFlyouts)
 	
 	--Icon in upper right corner of character frame
 	CharacterFramePortrait:Kill()
