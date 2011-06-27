@@ -8,11 +8,13 @@ function E.PP(p, obj)
 	local right = ElvuiInfoRight
 	local mapleft = ElvuiMinimapStatsLeft
 	local mapright = ElvuiMinimapStatsRight
-	local t, bottom, x
+	local t, x, bottom, bottomleft, bottomright
 	
 	if ElvUILowerStatPanel then
 		bottom = ElvUILowerStatPanel
-		x = bottom:GetWidth()/5	
+		bottomleft = ElvUILowerStatPanelLeft
+		bottomright = ElvUILowerStatPanelRight
+		x = ElvUILowerStatPanel:GetWidth()/3
 	end
 	
 	if obj:GetParent():GetName() == "TimeDataText" or obj:GetParent():GetName() == "DurabilityDataText" then t = true else t = false end
@@ -78,41 +80,41 @@ function E.PP(p, obj)
 			obj:SetPoint("CENTER", ElvuiStat10Block, 0, 0)
 			if t ~= true then obj:SetParent(ElvuiStat10Block) else obj:GetParent():SetParent(ElvuiStat10Block) end
 		elseif p == 11 then
-			obj:SetHeight(bottom:GetHeight())
-			obj:SetPoint('CENTER', bottom, -E.Scale(1.5 * x), 0)
-			if t ~= true then obj:SetParent(bottom) else obj:GetParent():SetParent(bottom) end
+			obj:SetHeight(bottomleft:GetHeight())
+			obj:SetPoint('CENTER', bottomleft, 'CENTER')
+			if t ~= true then obj:SetParent(bottomleft) else obj:GetParent():SetParent(bottomleft) end
 		elseif p == 12 then
 			obj:SetHeight(bottom:GetHeight())
-			obj:SetPoint('CENTER', bottom, -E.Scale(0.5 * x), 0)
+			obj:SetPoint('CENTER', bottom, 'LEFT', x, 0)
 			if t ~= true then obj:SetParent(bottom) else obj:GetParent():SetParent(bottom) end
 		elseif p == 13 then
 			obj:SetHeight(bottom:GetHeight())
-			obj:SetPoint('CENTER', bottom, E.Scale(0.5 * x), 0)
+			obj:SetPoint('CENTER', bottom, 'RIGHT', -x, 0)
 			if t ~= true then obj:SetParent(bottom) else obj:GetParent():SetParent(bottom) end
 		elseif p == 14 then
-			obj:SetHeight(bottom:GetHeight())
-			obj:SetPoint('CENTER', bottom, E.Scale(1.5 * x), 0)
-			if t ~= true then obj:SetParent(bottom) else obj:GetParent():SetParent(bottom) end
+			obj:SetHeight(bottomright:GetHeight())
+			obj:SetPoint('CENTER', bottomright, 'CENTER')
+			if t ~= true then obj:SetParent(bottomright) else obj:GetParent():SetParent(bottomright) end
 		end		
 	end
 	
 	if C["general"].lowerpanel == true and C["general"].upperpanel ~= true then
 		if p == 9 then
-			obj:SetHeight(bottom:GetHeight())
-			obj:SetPoint('CENTER', bottom, -E.Scale(1.5 * x), 0)
-			if t ~= true then obj:SetParent(bottom) else obj:GetParent():SetParent(bottom) end
+			obj:SetHeight(bottomleft:GetHeight())
+			obj:SetPoint('CENTER', bottomleft, 'CENTER')
+			if t ~= true then obj:SetParent(bottomleft) else obj:GetParent():SetParent(bottomleft) end
 		elseif p == 10 then
 			obj:SetHeight(bottom:GetHeight())
-			obj:SetPoint('CENTER', bottom, -E.Scale(0.5 * x), 0)
+			obj:SetPoint('CENTER', bottom, 'LEFT', x, 0)
 			if t ~= true then obj:SetParent(bottom) else obj:GetParent():SetParent(bottom) end
 		elseif p == 11 then
 			obj:SetHeight(bottom:GetHeight())
-			obj:SetPoint('CENTER', bottom, E.Scale(0.5 * x), 0)
+			obj:SetPoint('CENTER', bottom, 'RIGHT', -x, 0)
 			if t ~= true then obj:SetParent(bottom) else obj:GetParent():SetParent(bottom) end
 		elseif p == 12 then
-			obj:SetHeight(bottom:GetHeight())
-			obj:SetPoint('CENTER', bottom, E.Scale(1.5 * x), 0)
-			if t ~= true then obj:SetParent(bottom) else obj:GetParent():SetParent(bottom) end
+			obj:SetHeight(bottomright:GetHeight())
+			obj:SetPoint('CENTER', bottomright, 'CENTER')
+			if t ~= true then obj:SetParent(bottomright) else obj:GetParent():SetParent(bottomright) end
 		end	
 	end	
 	

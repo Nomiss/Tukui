@@ -91,10 +91,10 @@ barmod.ApplySettings = function(self, win)
 	end
 	
 	if C["skin"].embedright == "Skada" then
-		win.bargroup.button:SetFrameStrata("HIGH")
+		win.bargroup.button:SetFrameStrata("MEDIUM")
 		win.bargroup.button:SetFrameLevel(5)	
-		win.bargroup.bgframe:SetFrameStrata("HIGH")
-		win.bargroup:SetFrameStrata("HIGH")
+		win.bargroup.bgframe:SetFrameStrata("MEDIUM")
+		win.bargroup:SetFrameStrata("MEDIUM")
 	end
 	
 	self:AdjustBackgroundHeight(win)
@@ -168,4 +168,32 @@ if C["skin"].embedright == "Skada" then
 		
 		EmbedSkada()
 	end)	
+	
+	if ChatRBGTab then
+		local button = CreateFrame('Button', 'SkadaToggleSwitch', ChatRBGTab)
+		button:Width(90)
+		button:Height(ChatRBGTab:GetHeight() - 4)
+		button:Point("RIGHT", ChatRBGTab, "RIGHT", -2, 0)
+		
+		button.tex = button:CreateTexture(nil, 'OVERLAY')
+		button.tex:SetTexture([[Interface\AddOns\ElvUI\media\textures\vehicleexit.tga]])
+		button.tex:Point('TOPRIGHT', -2, -2)
+		button.tex:Height(button:GetHeight() - 4)
+		button.tex:Width(16)
+		
+		button:FontString(nil, C["media"].font, 12, 'THINOUTLINE')
+		button.text:SetPoint('RIGHT', button.tex, 'LEFT')
+		button.text:SetTextColor(unpack(C["media"].valuecolor))
+		
+		button:SetScript('OnEnter', function(self) button.text:SetText(L.addons_toggle..' Skada') end)
+		button:SetScript('OnLeave', function(self) self.tex:Point('TOPRIGHT', -2, -2); button.text:SetText(nil) end)
+		button:SetScript('OnMouseDown', function(self) self.tex:Point('TOPRIGHT', -4, -4) end)
+		button:SetScript('OnMouseUp', function(self) self.tex:Point('TOPRIGHT', -2, -2) end)
+		button:SetScript('OnClick', function(self) Skada:ToggleWindow() end)
+	end
+	
+	if C["skin"].embedrighttoggle == true then
+		ChatRBG:HookScript("OnShow", function() Skada:SetActive(false) end)
+		ChatRBG:HookScript("OnHide", function() Skada:SetActive(true) end)
+	end
 end

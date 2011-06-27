@@ -123,7 +123,7 @@ TRINKET_FILTER = {
 	CreateSpellEntry( 74245), -- Landslide
 	CreateSpellEntry( 74221), -- Hurricane	
 	CreateSpellEntry( 91320 ), -- Inner Eye (Jar of Ancient Remedies)
-	CreateSpellEntry( 91329 ), -- Inner Eye (H Jar of Ancient Remedies)
+	CreateSpellEntry( 92329 ), -- Inner Eye (H Jar of Ancient Remedies)
 	CreateSpellEntry( 74224 ), -- Heartsong
 	CreateSpellEntry( 74225 ), -- Heartsong
 	CreateSpellEntry( 91011 ), -- Bell of Enraging Resonance
@@ -566,7 +566,12 @@ CLASS_FILTERS = {
 			CreateSpellEntry( 46924 ), -- Bladestorm	
 			CreateSpellEntry( 86627 ), -- Incite
 			CreateSpellEntry( 12964 ), -- Battle Trance
+<<<<<<< HEAD
 			
+=======
+			CreateSpellEntry( 14202 ), --Enrage
+			CreateSpellEntry( 12292 ), --Death Wish
+>>>>>>> 252be7405abf8e938714fd34ef3eecadbafda5b1
 		},
 		procs = {
 			CreateSpellEntry( 65156 ), -- Juggernaut

@@ -38,7 +38,8 @@ function ElvuiConfig:LoadDefaults()
 				PetBuffs = E["PetBuffs"],
 				TRINKET_FILTER = TRINKET_FILTER,
 				CLASS_FILTERS = CLASS_FILTERS,
-				ChannelTicks = E["ChannelTicks"]
+				ChannelTicks = E["ChannelTicks"],
+				ReminderBuffs = E["ReminderBuffs"],
 			},
 		},
 	}
@@ -142,12 +143,321 @@ function ElvuiConfig.GenerateOptionsInternal()
 		["CLASS_FILTERS"] = true
 	}
 	
+	local ReminderBuffs = {
+		["ReminderBuffs"] = true
+	}
+	
 	local function CreateFilterTable(tab)
 		local spelltable = db.spellfilter[tab]
 		if not spelltable then error("db.spellfilter could not find value 'tab'") return {} end
 		local newtable = {}
 		
-		if tab == "ChannelTicks" then
+		if tab == "ReminderBuffs" then
+			local groupTable = {}
+			local spellTable = {}
+			if not spelltable[E.myclass] then spelltable[E.myclass] = {} end
+			for group, table in pairs(spelltable[E.myclass]) do
+				groupTable[group] = tostring(group)
+				spellTable = table["spells"]
+			end
+			
+			local s = spellTable
+			spellTable = {}
+			for id, value in pairs(s) do
+				local name = GetSpellInfo(id)
+				name = name.." ("..id..")"
+				spellTable[id] = name
+			end
+			s = nil
+			
+			local function Update()
+				local config = LibStub("AceConfigRegistry-3.0"):GetOptionsTable("ElvuiConfig", "dialog", "MyLib-1.2")
+				local curfilter = db.spellfilter.FilterPicker
+				config.args.spellfilter.args.SpellListTable.args = CreateFilterTable(curfilter)		
+
+				E.ReminderBuffs[E.myclass][curfilter] = db.spellfilter[tab][E.myclass][curfilter]	
+				
+			end
+			
+			newtable["SelectGroup"] = {
+				name = L["Choose Group"],
+				desc = L["Choose the group you want to modify."],
+				type = "select",
+				order = 1,
+				values = groupTable,
+				set = function(info, value)
+					db.spellfilter[ info[#info] ] = value;
+					Update()						
+				end,
+			}
+			local curfilter = db.spellfilter["SelectGroup"]
+			
+			if curfilter ~= nil and db.spellfilter[tab][E.myclass][curfilter] then
+				newtable["weapon"] = {
+					type = "toggle",
+					name = L["Check Weapon Enchants"],
+					desc = L["Run a check to see if you have all of your weapons enchanted (Typically for Rogue, Shamans)"],
+					order = 2,
+					get = function(info) return db.spellfilter[tab][E.myclass][curfilter]["weapon"] end,
+					set = function(info, value) 
+						db.spellfilter[tab][E.myclass][curfilter]["weapon"] = value 
+						Update()
+					end,
+				}
+				
+				newtable["role"] = {
+					type = 'select',
+					name = L["Role"],
+					desc = L["You must be a certain role for the icon to display"],
+					values = {
+						["Tank"] = L["Tank"],
+						["Melee"] = L["Melee"],
+						["Caster"] = L["Caster"],
+						["ANY"] = L["Any"],
+					},
+					get = function(info) 
+						if db.spellfilter[tab][E.myclass][curfilter]["role"] then 
+							return db.spellfilter[tab][E.myclass][curfilter]["role"] 
+						else 
+							return "ANY" 
+						end 
+					end,
+					set = function(info, value)
+						if value == "ANY" then 
+							db.spellfilter[tab][E.myclass][curfilter]["role"] = nil 
+						else 
+							db.spellfilter[tab][E.myclass][curfilter]["role"] = value 
+						end
+						Update()
+					end,
+					order = 3,
+				}
+				
+				local spec1, spec2, spec3 = select(2, GetTalentTabInfo(1)), select(2, GetTalentTabInfo(2)), select(2, GetTalentTabInfo(3))
+				newtable["tree"] = {
+					type = 'select',
+					name = L["Talent Tree"],
+					desc = L["You must be using a certain talent tree for the icon to show"],
+					order = 4,
+					get = function(info) if db.spellfilter[tab][E.myclass][curfilter]["tree"] then return tostring(db.spellfilter[tab][E.myclass][curfilter]["tree"]) else return "ANY" end end,
+					set = function(info, value) if value == "ANY" then db.spellfilter[tab][E.myclass][curfilter]["tree"] = nil else db.spellfilter[tab][E.myclass][curfilter]["tree"] = tonumber(value) end; Update() end,	
+					values = {
+						["1"] = spec1,
+						["2"] = spec2,
+						["3"] = spec3,
+						["ANY"] = L["Any"],
+					},
+				}
+				
+				newtable["level"] = {
+					type = "input",
+					name = L["Level Requirement"],
+					desc = L["Level requirement for the icon to be able to display."],
+					order = 5,
+					get = function(info) if db.spellfilter[tab][E.myclass][curfilter]["level"] then return db.spellfilter[tab][E.myclass][curfilter]["level"] else return '' end end,
+					set = function(info, value) 
+						if not tonumber(value) then
+							print(L["Value must be a number"])
+						elseif db.spellfilter[tab][E.myclass][curfilter]["level"] ~= '' then 
+							db.spellfilter[tab][E.myclass][curfilter]["level"] = tonumber(value)
+							Update()
+						else 
+							db.spellfilter[tab][E.myclass][curfilter]["level"] = nil
+							Update()
+						end 
+					end,
+				}
+				
+				newtable["personal"] = {
+					type = "toggle",
+					name = L["Personal Buffs Only"],
+					desc = L["Only check if the buff is coming from you"],
+					order = 6,
+					get = function(info) return db.spellfilter[tab][E.myclass][curfilter]["personal"] end,
+					set = function(info, value) db.spellfilter[tab][E.myclass][curfilter]["personal"] = value; Update() end,
+				}
+				
+				newtable["instance"] = {
+					type = "toggle",
+					name = L["Inside Raid/Party"],
+					desc = L["Only run checks inside raid/party instances"],
+					order = 7,
+					get = function(info) return db.spellfilter[tab][E.myclass][curfilter]["instance"] end,
+					set = function(info, value) db.spellfilter[tab][E.myclass][curfilter]["instance"] = value; Update() end,
+				}
+
+				newtable["pvp"] = {
+					type = "toggle",
+					name = L["Inside BG/Arena"],
+					desc = L["Only run checks inside BG/Arena instances"],
+					order = 8,
+					get = function(info) return db.spellfilter[tab][E.myclass][curfilter]["pvp"] end,
+					set = function(info, value) db.spellfilter[tab][E.myclass][curfilter]["pvp"] = value; Update() end,
+				}	
+
+				newtable["combat"] = {
+					type = "toggle",
+					name = L["During Combat"],
+					desc = L["Only run checks during combat"],
+					order = 9,
+					get = function(info) return db.spellfilter[tab][E.myclass][curfilter]["combat"] end,
+					set = function(info, value) db.spellfilter[tab][E.myclass][curfilter]["combat"] = value; Update() end,
+				}
+
+				if db.spellfilter[tab][E.myclass][curfilter]["weapon"] ~= true then
+					newtable["ReverseCheck"] = {
+						type = "toggle",
+						name = L["Reverse Check"],
+						desc = L["Instead of hiding the frame when you have the buff, show the frame when you have the buff."],
+						order = 10,
+						get = function(info) return db.spellfilter[tab][E.myclass][curfilter]["reversecheck"] end,
+						set = function(info, value) db.spellfilter[tab][E.myclass][curfilter]["reversecheck"] = value; Update() end,
+					}
+					
+					newtable["NegateReverseCheck"] = {
+						type = "select",
+						name = L["Negate Reverse Check"],
+						desc = L["Set a talent tree to not follow the reverse check"],
+						order = 11,
+						get = function(info) if db.spellfilter[tab][E.myclass][curfilter]["negate_reversecheck"] then return tostring(db.spellfilter[tab][E.myclass][curfilter]["negate_reversecheck"]) else return "NONE" end end,
+						set = function(info, value) if value == "NONE" then db.spellfilter[tab][E.myclass][curfilter]["negate_reversecheck"] = nil else db.spellfilter[tab][E.myclass][curfilter]["negate_reversecheck"] = tonumber(value) end; Update() end,	
+						disabled = function() return not db.spellfilter[tab][E.myclass][curfilter]["reversecheck"] end,
+						values = {
+							["1"] = spec1,
+							["2"] = spec2,
+							["3"] = spec3,
+							["NONE"] = L["None"],
+						},
+					}
+					
+					newtable["SpellGroup"] = {
+						type = "group",
+						name = L["Spells"],
+						guiInline = true,	
+						order = 12,
+						args = {},
+					}
+					
+					if not spelltable[E.myclass][curfilter]["spells"] then spelltable[E.myclass][curfilter]["spells"] = {} end
+					for spell, value in pairs(spelltable[E.myclass][curfilter]["spells"]) do
+						local name = GetSpellInfo(spell)
+						if newtable["SpellGroup"]["args"][name] == nil then
+							local sname = GetSpellInfo(spell)
+							sname = sname.." ("..spell..")"					
+							newtable["SpellGroup"]["args"][name] = {
+								name = sname,
+								type = "toggle",
+								get = function(info) if db.spellfilter[tab][E.myclass][curfilter]["spells"][spell] then return true else return false end end,
+								set = function(info, value) db.spellfilter[tab][E.myclass][curfilter]["spells"][spell] = value; E[tab] = db.spellfilter[tab]; Update() end,
+							}
+						end
+					end			
+
+					newtable["AddSpell"] = {
+						type = 'input',
+						name = L["New ID"],
+						get = function(info) return "" end,
+						set = function(info, value)	
+							if not tonumber(value) then
+								print(L["Value must be a number"])
+							elseif not GetSpellInfo(value) then
+								print(L["Not valid spell id"])
+							else							
+								value = tonumber(value)
+								db.spellfilter[tab][E.myclass][curfilter]["spells"][value] = true
+
+								Update()
+							end					
+						end,
+						order = 13,
+					}
+					
+					newtable["RemoveSpell"] = {
+						type = 'input',
+						name = L["Remove ID"],
+						get = function(info) return "" end,
+						set = function(info, value)			
+							if not tonumber(value) then
+								print(L["Value must be a number"])							
+							elseif not GetSpellInfo(value) then
+								print(L["Not valid spell id"])
+							elseif db.spellfilter[tab][E.myclass][curfilter]["spells"][tonumber(value)] == nil then
+								print(L["Spell not found in list"])
+							else
+								value = tonumber(value)
+								db.spellfilter[tab][E.myclass][curfilter]["spells"][value] = nil
+								Update()									
+							end					
+						end,
+						order = 14,
+					}	
+					
+					newtable["NegateSpellGroup"] = {
+						type = "group",
+						name = L["Negate Spells"],
+						guiInline = true,	
+						order = 15,
+						args = {},
+					}
+					
+					if not spelltable[E.myclass][curfilter]["negate_spells"] then spelltable[E.myclass][curfilter]["negate_spells"] = {} end
+					for spell, value in pairs(spelltable[E.myclass][curfilter]["negate_spells"]) do
+						local name = GetSpellInfo(spell)
+						if newtable["NegateSpellGroup"]["args"][name] == nil then
+							local sname = GetSpellInfo(spell)
+							sname = sname.." ("..spell..")"					
+							newtable["NegateSpellGroup"]["args"][name] = {
+								name = sname,
+								type = "toggle",
+								get = function(info) if db.spellfilter[tab][E.myclass][curfilter]["negate_spells"][spell] then return true else return false end end,
+								set = function(info, value) db.spellfilter[tab][E.myclass][curfilter]["negate_spells"][spell] = value; E[tab] = db.spellfilter[tab]; Update() end,
+							}
+						end
+					end			
+
+					newtable["AddNegateSpell"] = {
+						type = 'input',
+						name = L["New ID (Negate)"],
+						desc = L["If any spell found inside this list is found the icon will hide as well"],
+						get = function(info) return "" end,
+						set = function(info, value)		
+							if not tonumber(value) then
+								print(L["Value must be a number"])								
+							elseif not GetSpellInfo(value) then
+								print(L["Not valid spell id"])
+							else
+								value = tonumber(value)
+								db.spellfilter[tab][E.myclass][curfilter]["negate_spells"][value] = true
+								Update()										
+							end					
+						end,
+						order = 16,
+					}
+					
+					newtable["RemoveNegateSpell"] = {
+						type = 'input',
+						name = L["Remove ID (Negate)"],
+						get = function(info) return "" end,
+						set = function(info, value)	
+							if not tonumber(value) then
+								print(L["Value must be a number"])						
+							elseif not GetSpellInfo(value) then
+								print(L["Not valid spell id"])
+							elseif db.spellfilter[tab][E.myclass][curfilter]["negate_spells"][tonumber(value)] == nil then
+								print(L["Spell not found in list"])
+							else
+								value = tonumber(value)
+								db.spellfilter[tab][E.myclass][curfilter]["negate_spells"][value] = nil
+								Update()									
+							end					
+						end,
+						order = 17,
+					}						
+				end
+			end
+			groupTable = nil
+			spellTable = nil
+		elseif tab == "ChannelTicks" then
 			for spell, value in pairs(spelltable) do
 				if db.spellfilter[tab][spell] ~= nil then
 					newtable[spell] = {
@@ -424,9 +734,17 @@ function ElvuiConfig.GenerateOptionsInternal()
 								get = function(info) return db.spellfilter[tab][E.myclass][i]["anyUnit"] end,
 								set = function(info, value) db.spellfilter[tab][E.myclass][i]["anyUnit"] = value; StaticPopup_Show("CFG_RELOAD") end,									
 							},
+							onlyShowMissing = {
+								type = "toggle",
+								order = 4,
+								name = L["Display when missing"],
+								desc = L["Only display the icon when the unit doesn't have the buff."],
+								get = function(info) return db.spellfilter[tab][E.myclass][i]["onlyShowMissing"] end,
+								set = function(info, value) db.spellfilter[tab][E.myclass][i]["onlyShowMissing"] = value; StaticPopup_Show("CFG_RELOAD") end,								
+							},
 							Color = {
 								type = "color",
-								order = 4,
+								order = 5,
 								name = L["Color"],
 								hasAlpha = false,
 								get = function(info)
@@ -439,7 +757,7 @@ function ElvuiConfig.GenerateOptionsInternal()
 									t.r, t.g, t.b = r, g, b
 									StaticPopup_Show("CFG_RELOAD")
 								end,																	
-							},					
+							},
 						},
 					}
 				end
@@ -485,6 +803,8 @@ function ElvuiConfig.GenerateOptionsInternal()
 			return L["These buffs/debuffs are displayed as a classtimer, where they get positioned is based on your layout option choice"]
 		elseif db.spellfilter.FilterPicker == "ChannelTicks" then
 			return L["These spells when cast will display tick marks on the castbar"]
+		elseif db.spellfilter.FilterPicker == "ReminderBuffs" then
+			return L["These are warning icons that appear on the center of the screen"]			
 		else
 			return ""
 		end
@@ -495,6 +815,8 @@ function ElvuiConfig.GenerateOptionsInternal()
 			return L["Spells"]
 		elseif db.spellfilter.FilterPicker == "PlateBlacklist" then
 			return L["Nameplate Names"]
+		elseif db.spellfilter.FilterPicker == "ReminderBuffs" then
+			return L["Warning Groups"]
 		else
 			return L["Auras"]
 		end	
@@ -1012,9 +1334,16 @@ function ElvuiConfig.GenerateOptionsInternal()
 								name = L["Class Colored Powerbars"],
 								desc = L["Color powerbars by class"],						
 							},
+							classcolorbackdrop = {
+								type = "toggle",
+								order = 11,
+								name = L["Class Colored Backdrop"],
+								desc = L["Color backdrops by class"],
+								disabled = function() return (not db.unitframes.enable or db.unitframes.healthbackdrop) end,
+							},
 							healthcolor = {
 								type = "color",
-								order = 11,
+								order = 12,
 								name = L["Health Color"],
 								desc = L["Color of the healthbar"],
 								hasAlpha = false,
@@ -1032,19 +1361,19 @@ function ElvuiConfig.GenerateOptionsInternal()
 							},
 							healthcolorbyvalue = {
 								type = "toggle",
-								order = 12,
+								order = 13,
 								name = L["Color Health by Value"],
 								desc = L["Color the health frame by current ammount of hp remaining"],							
 							},
 							healthbackdrop = {
 								type = "toggle",
-								order = 13,
+								order = 14,
 								name = L["Custom Backdrop Color"],
 								desc = L["Enable using the custom backdrop color, otherwise 20% of the current health color gets used"],
 							},
 							healthbackdropcolor = {
 								type = "color",
-								order = 14,
+								order = 15,
 								name = L["Health Backdrop Color"],
 								desc = L["Color of the healthbar's backdrop"],
 								hasAlpha = false,
@@ -1062,81 +1391,81 @@ function ElvuiConfig.GenerateOptionsInternal()
 							},
 							combatfeedback = {
 								type = "toggle",
-								order = 15,
+								order = 16,
 								name = L["Combat Feedback"],
 								desc = L["Enable displaying incoming damage/healing on player/target frame"],							
 							},
 							debuffhighlight = {
 								type = "toggle",
-								order = 16,
+								order = 17,
 								name = L["Debuff Highlighting"],
 								desc = L["Enable highlighting unitframes when there is a debuff you can dispel"],							
 							},
 							classbar = {
 								type = "toggle",
-								order = 17,
+								order = 18,
 								name = L["ClassBar"],
 								desc = L["Display class specific bar (runebar/totembar/holypowerbar/soulshardbar/eclipsebar)"],							
 							},
 							combat = {
 								type = "toggle",
-								order = 18,
+								order = 19,
 								name = L["Combat Fade"],
 								desc = L["Fade main unitframes out when not in combat, unless you cast or mouseover the frame"],								
 							},
 							mini_powerbar = {
 								type = "toggle",
-								order = 19,
+								order = 20,
 								name = L["Mini-Powerbar Theme"],
 								desc = L["Style the unitframes with a smaller powerbar"],		
 								disabled = function() return not db.unitframes.enable or db.unitframes.powerbar_offset ~= 0 end,	
 							},
 							mini_classbar = {
 								type = "toggle",
-								order = 20,
+								order = 21,
 								name = L["Mini-Classbar Theme"],
 								desc = L["Make classbars smaller and restyle them"],
 							},
 							arena = {
 								type = "toggle",
-								order = 21,
+								order = 22,
 								name = L["Arena Frames"],							
 							},
 							showboss = {
 								type = "toggle",
-								order = 22,
+								order = 23,
 								name = L["Boss Frames"],							
 							},
 							swing = {
 								type = "toggle",
-								order = 23,
+								order = 24,
 								name = L["Swing Bar"],
 								desc = L["Bar that displays time between melee attacks"],
 								disabled = function() return (not db.unitframes.enable or not (IsAddOnLoaded("ElvUI_RaidDPS") or db.general.layoutoverride == "DPS")) end,	
 							},
 							displayaggro = {
 								type = "toggle",
-								order = 24,
+								order = 25,
 								name = L["Display Aggro"],
 								desc = L["Enable red glow around the player frame when you have aggro"],
 							},
 							powerbar_offset = {
 								type = "range",
-								order = 25,
+								order = 26,
 								name = L["Powerbar Offset"],
 								desc = L["Detach and offset the power bar on the main unitframes"],
 								min = 0, max = 12, step = 1,	
 							},
 							powerbar_height = {
 								type = "range",
-								order = 26,
+								order = 27,
 								name = L["Powerbar Height"],
 								desc = L["Set the height of the powerbar, this is void if you don't have powerbar offset set to zero."],
 								min = 5, max = 25, step = 1,								
 							},
 							classbar_height = {
 								type = "range",
-								order = 27,
+								order = 28,
 								name = L["Classbar Height"],
 								desc = L["Set the height of the classbar."],
 								min = 5, max = 25, step = 1,								
@@ -1699,6 +2028,12 @@ function ElvuiConfig.GenerateOptionsInternal()
 								type = "range",
 								min = 3, max = 18, step = 1,									
 							},
+							buffindicatorcoloricons = {
+								type = "toggle",
+								order = 23,
+								name = L["Color Buff Icons"],
+								desc = L["If turned off the buff icon on raid/party frames will be displayed as the actual texture of the icon instead of a color icon"],
+							},
 						},
 					},
 				},
@@ -2172,29 +2507,36 @@ function ElvuiConfig.GenerateOptionsInternal()
 								desc = L["Display Hit Rating"]..L["DATATEXT_POS"],
 								min = 0, max = 8, step = 1,								
 							},
-							haste = {
+							expertise = {
 								order = 16,
+								type = "range",
+								name = L["Expertise Rating"],
+								desc = L["Display Expertise Rating"]..L["DATATEXT_POS"],
+								min = 0, max = 8, step = 1,								
+							},							
+							haste = {
+								order = 17,
 								type = "range",
 								name = L["Haste Rating"],
 								desc = L["Display Haste Rating"]..L["DATATEXT_POS"],
 								min = 0, max = 8, step = 1,								
 							},
 							crit = {
-								order = 17,
+								order = 18,
 								type = "range",
 								name = L["Crit Rating"],
 								desc = L["Display Critical Strike Rating"]..L["DATATEXT_POS"],
 								min = 0, max = 8, step = 1,									
 							},
 							manaregen = {
-								order = 17,
+								order = 19,
 								type = "range",
 								name = L["Mana Regen"],
 								desc = L["Display Mana Regen Rate"]..L["DATATEXT_POS"],
 								min = 0, max = 8, step = 1,									
 							},
 							calltoarms = {
-								order = 18,
+								order = 20,
 								type = "range",
 								name = L["Call to Arms"],
 								desc = L["Display the active roles that will recieve a reward for completing a random dungeon"]..L["DATATEXT_POS"],
@@ -2393,6 +2735,12 @@ function ElvuiConfig.GenerateOptionsInternal()
 						guiInline = true,
 						disabled = function() return not db.skin.enable end,	
 						args = {
+							encounterjournal = {
+								type = "toggle",
+								name = L["Encounter Journal"],
+								desc = L["TOGGLESKIN_DESC"],
+								disabled = function() return not db.skin.enable or not E.IsPTRVersion() end,
+							},
 							reforge = {
 								type = "toggle",
 								name = L["Reforge Frame"],
@@ -2632,8 +2980,15 @@ function ElvuiConfig.GenerateOptionsInternal()
 							["Skada"] = "Skada",
 						},						
 					},
-					AddOnSkins = {
+					embedrighttoggle = {
 						order = 5,
+						type = "toggle",
+						name = L["Toggle Embedded with right chat"],
+						desc = L["When the right chat gets shown the embedded addon will hide, when the right chat gets hidden the embedded addon will show."],
+						disabled = function() return db.skin.embedright == "NONE" end,
+					},
+					AddOnSkins = {
+						order = 6,
 						type = "group",
 						name = L["Addon Skins"],
 						guiInline = true,
@@ -2686,14 +3041,26 @@ function ElvuiConfig.GenerateOptionsInternal()
 								name = "DBM",
 								desc = L["Enable this skin"],
 							},		
+							clcret = {
+								order = 7,
+								type = "toggle",
+								name = "CLCRet",
+								desc = L["Enable this skin"],							
+							},
+							clcprot = {
+								order = 8,
+								type = "toggle",
+								name = "CLCProt",
+								desc = L["Enable this skin"],							
+							},							
 							bigwigs = {
-								order = 1,
+								order = 9,
 								type = "toggle",
 								name = "BigWigs",
 								desc = L["Enable this skin"],
 							},
 							hookbwright = {
-								order = 2,
+								order = 10,
 								type = "toggle",
 								name = L["Hook BigWigs Bars"],
 								desc = L["Attach BigWigs's Bars to the right window"],
@@ -2725,6 +3092,7 @@ function ElvuiConfig.GenerateOptionsInternal()
 							UpdateSpellFilter()
 						end,
 						values = {
+							["ReminderBuffs"] = L["Buff Reminders"],
 							["RaidDebuffs"] = L["Raid Debuffs"],
 							["DebuffBlacklist"] = L["Debuff Blacklist"],	
 							["DebuffWhiteList"] = L["Debuff Whitelist"],
@@ -2752,11 +3120,15 @@ function ElvuiConfig.GenerateOptionsInternal()
 					},						
 					NewName = {
 						type = 'input',
-						name = function() if ClassTimerShared[db.spellfilter.FilterPicker] or ClassTimer[db.spellfilter.FilterPicker] or RaidBuffs[db.spellfilter.FilterPicker] then return L["New ID"] else return L["New name"] end end,
-						desc = L["Add a new spell name / ID to the list."],
+						name = function() if ClassTimerShared[db.spellfilter.FilterPicker] or ClassTimer[db.spellfilter.FilterPicker] or RaidBuffs[db.spellfilter.FilterPicker] then return L["New ID"] elseif ReminderBuffs[db.spellfilter.FilterPicker] then return L["New Group"] else return L["New name"] end end,
 						get = function(info) return "" end,
 						set = function(info, value)
-							if db.spellfilter.FilterPicker == "ChannelTicks" then
+							if ReminderBuffs[db.spellfilter.FilterPicker] then
+								local name_list = db.spellfilter[db.spellfilter.FilterPicker]
+								if not name_list[E.myclass] then name_list[E.myclass] = {} end
+								name_list[E.myclass][value] = {}
+								UpdateSpellFilter()
+							elseif db.spellfilter.FilterPicker == "ChannelTicks" then
 								local name_list = db.spellfilter[db.spellfilter.FilterPicker]
 								name_list[value] = 0
 								UpdateSpellFilter()
@@ -2804,12 +3176,16 @@ function ElvuiConfig.GenerateOptionsInternal()
 					},
 					DeleteName = {
 						type = 'input',
-						name = function() if ClassTimerShared[db.spellfilter.FilterPicker] or ClassTimer[db.spellfilter.FilterPicker] or RaidBuffs[db.spellfilter.FilterPicker] then return L["Remove ID"] else return L["Remove Name"] end end,
-						desc = L["You may only delete spells that you have added. Default spells can be disabled by unchecking the option"],
+						name = function() if ClassTimerShared[db.spellfilter.FilterPicker] or ClassTimer[db.spellfilter.FilterPicker] or RaidBuffs[db.spellfilter.FilterPicker] then return L["Remove ID"] elseif ReminderBuffs[db.spellfilter.FilterPicker] then return L["Remove Group"] else return L["Remove Name"] end end,
 						get = function(info) return "" end,
 						set = function(info, value)
 
-							if ClassTimer[db.spellfilter.FilterPicker] then
+							if ReminderBuffs[db.spellfilter.FilterPicker] then
+								local name_list = db.spellfilter[db.spellfilter.FilterPicker]
+								if not name_list[E.myclass] then name_list[E.myclass] = {} end
+								name_list[E.myclass][value] = nil
+								UpdateSpellFilter()
+							elseif ClassTimer[db.spellfilter.FilterPicker] then
 								if not GetSpellInfo(value) then
 									print(L["Not valid spell id"])
 								elseif not db.spellfilter["SelectSpellFilter"] then

@@ -54,7 +54,7 @@ local function Shared(self, unit)
 		if C["raidframes"].gridhealthvertical == true then
 			health:SetOrientation("VERTICAL")
 		end		
-		health.value:Point("BOTTOM", health, "BOTTOM", 0, 3)
+		health.value:Point("BOTTOM", health, "BOTTOM", 0, 7)
 		health.value:SetFont(C["media"].uffont, (C["raidframes"].fontsize-1)*C["raidframes"].scale, "THINOUTLINE")
 		
 		self.Health = health
@@ -82,10 +82,11 @@ local function Shared(self, unit)
 
 		if C["raidframes"].role == true then
 			local LFDRole = self:CreateTexture(nil, "OVERLAY")
-			LFDRole:Size(6, 6)
+			LFDRole:Size(17, 17)
 			LFDRole:Point("TOP", self.Name, "BOTTOM", 0, -1)
-			LFDRole:SetTexture("Interface\\AddOns\\ElvUI\\media\\textures\\lfdicons.blp")
-			self.LFDRole = LFDRole
+			LFDRole.Override = E.RoleIconUpdate
+			self:RegisterEvent("UNIT_CONNECTION", E.RoleIconUpdate)
+			self.LFDRole = LFDRole		
 		end
 		
 		--Aggro Glow
@@ -191,6 +192,19 @@ local function Shared(self, unit)
 		
 		if C["raidframes"].raidunitbuffwatch == true then
 			E.createAuraWatch(self,unit)
+		end	
+		
+		--Resurrect Indicator
+		if E.IsPTRVersion() then
+			local Resurrect = CreateFrame('Frame', nil, self)
+			Resurrect:SetFrameLevel(20)
+
+			local ResurrectIcon = Resurrect:CreateTexture(nil, "OVERLAY")
+			ResurrectIcon:Point(health.value:GetPoint())
+			ResurrectIcon:Size(30, 25)
+			ResurrectIcon:SetDrawLayer('OVERLAY', 7)
+
+			self.ResurrectIcon = ResurrectIcon
 		end	
 	end
 	
